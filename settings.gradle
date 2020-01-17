@@ -1,15 +1,59 @@
 include ':RTSP-IPCam-Viewer'
 
-include ':exoplayer-core'
+include ':library-core'
 include ':exoplayer-ui'
 include ':exoplayer-rtp'
 include ':exoplayer-rtsp'
 include ':exoplayer-sdp'
 include ':MaterialFilePicker'
 
-project(':exoplayer-core'    ).projectDir = new File(rootDir, 'libs/exoplayer/core')
+project(':library-core'    ).projectDir = new File(rootDir, 'libs/exoplayer/core')
 project(':exoplayer-ui'      ).projectDir = new File(rootDir, 'libs/exoplayer/ui')
 project(':exoplayer-rtp'     ).projectDir = new File(rootDir, 'libs/exoplayer/rtp')
 project(':exoplayer-rtsp'    ).projectDir = new File(rootDir, 'libs/exoplayer/rtsp')
 project(':exoplayer-sdp'     ).projectDir = new File(rootDir, 'libs/exoplayer/sdp')
 project(':MaterialFilePicker').projectDir = new File(rootDir, 'libs/MaterialFilePicker')
+
+
+
+include ':library-dash'
+include ':library-hls'
+include ':library-smoothstreaming'
+include ':library-ui'
+include ':testutils'
+include ':extension-av1'
+include ':extension-ffmpeg'
+include ':extension-flac'
+include ':extension-gvr'
+include ':extension-ima'
+include ':extension-cast'
+include ':extension-cronet'
+include ':extension-mediasession'
+include ':extension-okhttp'
+include ':extension-opus'
+include ':extension-vp9'
+include ':extension-rtmp'
+include ':extension-leanback'
+include ':extension-jobdispatcher'
+include ':extension-workmanager'
+
+project(':library-dash').projectDir = new File(rootDir, 'ExoPlayer/library/dash')
+project(':library-hls').projectDir = new File(rootDir, 'ExoPlayer/library/hls')
+project(':library-smoothstreaming').projectDir = new File(rootDir, 'ExoPlayer/library/smoothstreaming')
+project(':library-ui').projectDir = new File(rootDir, 'ExoPlayer/library/ui')
+project(':testutils').projectDir = new File(rootDir, 'ExoPlayer/testutils')
+project(':extension-av1').projectDir = new File(rootDir, 'ExoPlayer/extensions/av1')
+project(':extension-ffmpeg').projectDir = new File(rootDir, 'ExoPlayer/extensions/ffmpeg')
+project(':extension-flac').projectDir = new File(rootDir, 'ExoPlayer/extensions/flac')
+project(':extension-gvr').projectDir = new File(rootDir, 'ExoPlayer/extensions/gvr')
+project(':extension-ima').projectDir = new File(rootDir, 'ExoPlayer/extensions/ima')
+project(':extension-cast').projectDir = new File(rootDir, 'ExoPlayer/extensions/cast')
+project(':extension-cronet').projectDir = new File(rootDir, 'ExoPlayer/extensions/cronet')
+project(':extension-mediasession').projectDir = new File(rootDir, 'ExoPlayer/extensions/mediasession')
+project(':extension-okhttp').projectDir = new File(rootDir, 'ExoPlayer/extensions/okhttp')
+project(':extension-opus').projectDir = new File(rootDir, 'ExoPlayer/extensions/opus')
+project(':extension-vp9').projectDir = new File(rootDir, 'ExoPlayer/extensions/vp9')
+project(':extension-rtmp').projectDir = new File(rootDir, 'ExoPlayer/extensions/rtmp')
+project(':extension-leanback').projectDir = new File(rootDir, 'ExoPlayer/extensions/leanback')
+project(':extension-jobdispatcher').projectDir = new File(rootDir, 'ExoPlayer/extensions/jobdispatcher')
+project(':extension-workmanager').projectDir = new File(rootDir, 'ExoPlayer/extensions/workmanager')

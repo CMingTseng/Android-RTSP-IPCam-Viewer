@@ -52,7 +52,7 @@ dependencies {
 
     implementation project(':MaterialFilePicker')                                                                    //          https://github.com/nbsp-team/MaterialFilePicker
 
-    implementation project(':exoplayer-core')
+    implementation project(':library-core')
     implementation project(':exoplayer-ui')
     implementation project(':exoplayer-rtp')
     implementation project(':exoplayer-rtsp')
