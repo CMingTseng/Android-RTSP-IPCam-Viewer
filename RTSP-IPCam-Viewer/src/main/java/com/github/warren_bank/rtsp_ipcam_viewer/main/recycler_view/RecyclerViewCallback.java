@@ -1,24 +1,23 @@
 package com.github.warren_bank.rtsp_ipcam_viewer.main.recycler_view;
 
 import com.github.warren_bank.rtsp_ipcam_viewer.common.data.C;
-import com.github.warren_bank.rtsp_ipcam_viewer.common.data.VideoType;
+import com.github.warren_bank.rtsp_ipcam_viewer.mock.data.Sample;
+
+import java.util.ArrayList;
 
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
-
 public final class RecyclerViewCallback extends ItemTouchHelper.SimpleCallback {
 
-    private RecyclerViewAdapter  adapter;
-    private ArrayList<VideoType> videos;
+    private VideoListAdapter adapter;
+    private ArrayList<Sample> videos;
 
     private int draggingFromPosition;
     private int draggingToPosition;
 
-    public RecyclerViewCallback(RecyclerViewAdapter adapter) {
+    public RecyclerViewCallback(VideoListAdapter adapter) {
         super(ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.START | ItemTouchHelper.END);
-
         this.adapter              = adapter;
         this.videos               = adapter.videos;
         this.draggingFromPosition = C.INDEX_UNSET;
@@ -34,7 +33,7 @@ public final class RecyclerViewCallback extends ItemTouchHelper.SimpleCallback {
         }
         draggingToPosition = toPosition;
         adapter.notifyItemMoved(fromPosition, toPosition);
-        RecyclerViewAdapter.saveVideos(adapter);
+        VideoListAdapter.saveVideos(adapter);
         return true;
     }
 
@@ -46,7 +45,7 @@ public final class RecyclerViewCallback extends ItemTouchHelper.SimpleCallback {
 
         videos.remove(position);
         adapter.notifyItemRemoved(position);
-        RecyclerViewAdapter.saveVideos(adapter);
+        VideoListAdapter.saveVideos(adapter);
     }
 
     @Override
@@ -60,7 +59,7 @@ public final class RecyclerViewCallback extends ItemTouchHelper.SimpleCallback {
         ) {
             videos.add(draggingToPosition, videos.remove(draggingFromPosition));
             adapter.notifyDataSetChanged();
-            RecyclerViewAdapter.saveVideos(adapter);
+            VideoListAdapter.saveVideos(adapter);
         }
         draggingFromPosition = C.INDEX_UNSET;
         draggingToPosition = C.INDEX_UNSET;
