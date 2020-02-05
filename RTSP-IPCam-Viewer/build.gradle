@@ -57,6 +57,9 @@ dependencies {
     implementation project(':exoplayer-rtp')
     implementation project(':exoplayer-rtsp')
     implementation project(':exoplayer-sdp')
+    implementation project(path: ':library-dash')
+    implementation project(path: ':library-smoothstreaming')
+    implementation project(path: ':library-hls')
 }
 
 apply plugin: 'com.google.android.gms.strict-version-matcher-plugin'
