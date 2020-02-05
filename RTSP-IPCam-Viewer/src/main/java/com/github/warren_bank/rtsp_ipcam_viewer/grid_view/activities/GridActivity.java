@@ -1,19 +1,17 @@
 package com.github.warren_bank.rtsp_ipcam_viewer.grid_view.activities;
 
-import com.github.warren_bank.rtsp_ipcam_viewer.R;
-import com.github.warren_bank.rtsp_ipcam_viewer.common.data.SharedPrefs;
-import com.github.warren_bank.rtsp_ipcam_viewer.common.data.VideoType;
-import com.github.warren_bank.rtsp_ipcam_viewer.grid_view.recycler_view.RecyclerViewInit;
-import com.github.warren_bank.rtsp_ipcam_viewer.list_view.recycler_view.RecyclerViewAdapter;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.RecyclerView;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+
+import com.github.warren_bank.rtsp_ipcam_viewer.R;
+import com.github.warren_bank.rtsp_ipcam_viewer.common.data.VideoType;
+import com.github.warren_bank.rtsp_ipcam_viewer.list_view.recycler_view.VideoAdapter;
 
 import java.util.ArrayList;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
 
 public final class GridActivity extends AppCompatActivity {
     private static final String EXTRA_JSON_VIDEOS  = "JSON_VIDEOS";
@@ -23,7 +21,7 @@ public final class GridActivity extends AppCompatActivity {
     private static int columns;
 
     private RecyclerView        recyclerView;
-    private RecyclerViewAdapter recyclerViewAdapter;
+    private VideoAdapter recyclerViewAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -33,13 +31,13 @@ public final class GridActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
 
-        this.videos = (intent.hasExtra(EXTRA_JSON_VIDEOS))
-            ? VideoType.fromJson(intent.getStringExtra(EXTRA_JSON_VIDEOS))
-            : VideoType.filterByEnabled(SharedPrefs.getVideos(this))
-        ;
-        this.columns             = intent.getIntExtra(EXTRA_GRID_COLUMNS, 2);
-        this.recyclerView        = (RecyclerView) findViewById(R.id.recycler_view);
-        this.recyclerViewAdapter = RecyclerViewInit.adapter(this, this.recyclerView, this.videos, this.columns);
+//        this.videos = (intent.hasExtra(EXTRA_JSON_VIDEOS))
+//            ? VideoType.fromJson(intent.getStringExtra(EXTRA_JSON_VIDEOS))
+//            : VideoType.filterByEnabled(SharedPrefs.getVideos(this))
+//        ;
+//        this.columns             = intent.getIntExtra(EXTRA_GRID_COLUMNS, 2);
+//        this.recyclerView        = (RecyclerView) findViewById(R.id.recycler_view);
+//        this.recyclerViewAdapter = RecyclerViewInit.adapter(this, this.recyclerView, this.videos, this.columns);
     }
 
     @Override
