@@ -64,6 +64,7 @@ public abstract class Sample {
     public abstract void addToIntent(Intent intent);
 
     public static final class UriSample extends Sample {
+        private static final String TAG = "UriSample";
         public final Uri uri;
         public final String extension;
         public final boolean isLive;
@@ -72,7 +73,7 @@ public abstract class Sample {
         @Nullable
         public final String sphericalStereoMode;
         @Nullable
-        SubtitleInfo subtitleInfo;
+        public SubtitleInfo subtitleInfo;
 
 
         public String URL_low_res;
