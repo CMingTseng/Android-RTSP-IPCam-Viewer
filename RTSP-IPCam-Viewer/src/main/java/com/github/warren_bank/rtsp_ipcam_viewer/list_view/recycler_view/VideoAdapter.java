@@ -186,9 +186,7 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
                 Log.e(TAG, "Show is PlaylistSample !! has child : " + ((Sample.PlaylistSample) this.data).children.length);
             } else if (this.data instanceof Sample.UriSample) {
                 stop();
-//                uri = Uri.parse(((Sample.UriSample) data).uri);
                 uri = ((Sample.UriSample) data).uri;
-
                 if (Util.isRtspUri(uri)) {
                     Log.e(TAG, "Show  is RTSP uri : " + uri);
                     mediaSource = new RtspMediaSource.Factory(RtspDefaultClient.factory()
@@ -196,6 +194,8 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
                             .setNatMethod(Client.RTSP_NAT_DUMMY)
                             .setPlayer(exoPlayer))
                             .createMediaSource(uri);
+                    exoPlayer.prepare(mediaSource);
+                    play();
                 } else {
                     Log.e(TAG, "Show  Extractor uri : " + uri);
                     List<MediaSource> mediaSources = new ArrayList<>();
@@ -233,9 +233,10 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
 //                    } else {
 //                        releaseAdsLoader();
 //                    }
+//                    exoPlayer.prepare(mediaSource);
+//                    play();
                 }
-                exoPlayer.prepare(mediaSource);
-                play();
+
             }
         }
 
