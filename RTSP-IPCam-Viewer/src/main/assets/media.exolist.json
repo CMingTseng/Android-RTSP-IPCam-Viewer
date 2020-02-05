@@ -3,13 +3,8 @@
     "name": "RTSP ",
     "samples": [
       {
-        "name": "RTSP 16:9 @ 720x480 low, 852x480 high",
-        "uri": "rtsp://8.42.69.117:554/axis-media/media.amp?videocodec=h264&resolution=720x480"
-      },
-      {
-        "name": "RTSP 4:3 @ 720x480",
-        "uri": "rtsp://184.72.239.149/vod/mp4:BigBuckBunny_175k.mov",
-        "extension": "mpd"
+        "name": "RTSP 4:3 @ 320x240 low, 1152x870 high",
+        "uri": "rtsp://8.42.69.117:554/axis-media/media.amp?videocodec=h264&resolution=320x240"
       }
     ]
   },
