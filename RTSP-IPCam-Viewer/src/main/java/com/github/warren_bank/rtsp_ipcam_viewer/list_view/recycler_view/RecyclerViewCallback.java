@@ -1,22 +1,22 @@
 package com.github.warren_bank.rtsp_ipcam_viewer.list_view.recycler_view;
 
 import com.github.warren_bank.rtsp_ipcam_viewer.common.data.C;
-import com.github.warren_bank.rtsp_ipcam_viewer.common.data.VideoType;
+import com.github.warren_bank.rtsp_ipcam_viewer.mock.data.Sample;
+
+import java.util.ArrayList;
 
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
-
 public final class RecyclerViewCallback extends ItemTouchHelper.SimpleCallback {
 
-    private RecyclerViewAdapter  adapter;
-    private ArrayList<VideoType> videos;
+    private VideoAdapter adapter;
+    private ArrayList<Sample> videos;
 
     private int draggingFromPosition;
     private int draggingToPosition;
 
-    public RecyclerViewCallback(RecyclerViewAdapter adapter) {
+    public RecyclerViewCallback(VideoAdapter adapter) {
         super(ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.START | ItemTouchHelper.END);
 
         this.adapter              = adapter;
