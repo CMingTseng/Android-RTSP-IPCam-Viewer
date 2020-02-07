@@ -2,11 +2,13 @@ package com.github.warren_bank.rtsp_ipcam_viewer.list_view.recycler_view;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
-import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.ParserException;
+import com.google.android.exoplayer2.PlaybackPreparer;
 import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.database.DatabaseProvider;
+import com.google.android.exoplayer2.database.ExoDatabaseProvider;
 import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
 import com.google.android.exoplayer2.drm.DrmSessionManager;
 import com.google.android.exoplayer2.drm.ExoMediaCrypto;
@@ -23,20 +25,27 @@ import com.google.android.exoplayer2.source.rtsp.RtspDefaultClient;
 import com.google.android.exoplayer2.source.rtsp.RtspMediaSource;
 import com.google.android.exoplayer2.source.rtsp.core.Client;
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSourceInputStream;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.DefaultDataSource;
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.FileDataSource;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
+import com.google.android.exoplayer2.upstream.cache.Cache;
+import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
+import com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory;
+import com.google.android.exoplayer2.upstream.cache.NoOpCacheEvictor;
+import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.Log;
 import com.google.android.exoplayer2.util.Util;
 
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaDrm;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -53,6 +62,7 @@ import com.github.warren_bank.rtsp_ipcam_viewer.common.helpers.Utils;
 import com.github.warren_bank.rtsp_ipcam_viewer.mock.data.Sample;
 import com.github.warren_bank.rtsp_ipcam_viewer.mock.data.SampleGroup;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -111,7 +121,7 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
 
         Sample video = videos.get(position);
 
-        holder.bind(video);
+        holder.bind(video, position);
     }
 
     @Override
@@ -129,11 +139,16 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
     }
 
     public static final class RecyclerViewHolder extends RecyclerView.ViewHolder implements View.OnTouchListener, GestureDetector.OnGestureListener {
+        private Context context;
 
-        private PlayerView view;
+        private DataSource.Factory dataSourceFactory;
+
+        private File downloadDirectory;
+        private DatabaseProvider databaseProvider;
+        private PlayerView playerView;
+        private List<MediaSource> mediaSources;
         private TextView title;
-        private SimpleExoPlayer exoPlayer;
-        private DefaultHttpDataSourceFactory dataSourceFactory;
+        private SimpleExoPlayer player;
         private GestureDetectorCompat gestureDetector;
 
         private Sample data;
@@ -141,12 +156,12 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
 
         public RecyclerViewHolder(View view, int defaultHeight) {
             super(view);
-
-            this.view = (PlayerView) view;
+            context = view.getContext();
+            this.playerView = (PlayerView) view;
             this.title = (TextView) view.findViewById(R.id.exo_title);
 
             if (defaultHeight > 0) {
-                this.view.setMinimumHeight(defaultHeight);
+                this.playerView.setMinimumHeight(defaultHeight);
                 this.title.setMaxHeight(defaultHeight);
 
                 if (this.title.getTextSize() > defaultHeight) {
@@ -158,26 +173,32 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
                 }
             }
 
-            Context context = view.getContext();
-            DefaultTrackSelector trackSelector = new DefaultTrackSelector();
-            RenderersFactory renderersFactory = new DefaultRenderersFactory(context);
-            this.exoPlayer = ExoPlayerFactory.newSimpleInstance(context, renderersFactory, trackSelector);
 
-            String userAgent = context.getResources().getString(R.string.user_agent);
-            this.dataSourceFactory = new DefaultHttpDataSourceFactory(userAgent);
+            playerView.setPlaybackPreparer(new PlaybackPreparer() {
+                @Override
+                public void preparePlayback() {
+                    Log.e(TAG, "Show  preparePlayback");
+                }
+            });
+//
+//            this.player.setVolume(0f);  // mute all videos in list playerView
+        }
 
+        public void bind(Sample data, int index) {
+            dataSourceFactory = buildDataSourceFactory(context, index);
+//            DefaultTrackSelector trackSelector = new DefaultTrackSelector();
+            RenderersFactory renderersFactory = buildRenderersFactory(context);
+            player = new SimpleExoPlayer.Builder(/* context= */ context, renderersFactory).build();
+            player.setPlayWhenReady(true);
             this.gestureDetector = new GestureDetectorCompat(context, this);
             this.gestureDetector.setIsLongpressEnabled(true);
 
-            this.view.setOnTouchListener(this);
-            this.view.setUseController(false);
-            this.view.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH);
-            this.view.setPlayer(this.exoPlayer);
+            this.playerView.setOnTouchListener(this);
+            this.playerView.setUseController(false);
+            this.playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH);
+            this.playerView.requestFocus();
+            this.playerView.setPlayer(this.player);
 
-            this.exoPlayer.setVolume(0f);  // mute all videos in list view
-        }
-
-        public void bind(Sample data) {
             this.data = data;
             this.title.setText(data.name);
             Uri uri;
@@ -192,11 +213,12 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
                     mediaSource = new RtspMediaSource.Factory(RtspDefaultClient.factory()
                             .setFlags(Client.FLAG_ENABLE_RTCP_SUPPORT)
                             .setNatMethod(Client.RTSP_NAT_DUMMY)
-                            .setPlayer(exoPlayer))
+                            .setPlayer(player))
                             .createMediaSource(uri);
-                    exoPlayer.prepare(mediaSource);
+                    player.prepare(mediaSource);
                     play();
                 } else {
+
                     Log.e(TAG, "Show  Extractor uri : " + uri);
                     List<MediaSource> mediaSources = new ArrayList<>();
                     Sample.UriSample sample = (Sample.UriSample) data;
@@ -215,6 +237,12 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
                         mediaSource = new MergingMediaSource(mediaSource, subtitleMediaSource);
                     }
                     mediaSources.add(mediaSource);
+                    Log.e(TAG, "Show MediaSource size  : " + mediaSources.size());
+                    for (MediaSource source : mediaSources) {
+                        Log.e(TAG, "Show MediaSource : " + source);
+                    }
+                    player.prepare(mediaSources.get(0));
+                    play();
 //                    if (seenAdsTagUri && mediaSources.size() == 1) {
 //                        Uri adTagUri = samples[0].adTagUri;
 //                        if (!adTagUri.equals(loadedAdTagUri)) {
@@ -233,11 +261,117 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
 //                    } else {
 //                        releaseAdsLoader();
 //                    }
-//                    exoPlayer.prepare(mediaSource);
+
+//                    player.prepare(mediaSource);
 //                    play();
                 }
-
             }
+        }
+
+
+        /**
+         * Returns a {@link DataSource.Factory}.
+         */
+        private DataSource.Factory buildDataSourceFactory(Context context, int index) {
+//            Log.e(TAG, "buildDataSourceFactory", new Throwable());
+            DefaultDataSourceFactory upstreamFactory = new DefaultDataSourceFactory(context, buildHttpDataSourceFactory());
+            return buildReadOnlyCacheDataSource(upstreamFactory, getDownloadCache(context, index));
+        }
+
+        protected synchronized Cache getDownloadCache(Context context, int index) {
+            File downloadContentDirectory = new File(getDownloadDirectory(context), "downloads" + index);
+
+            return new SimpleCache(downloadContentDirectory, new NoOpCacheEvictor(), getDatabaseProvider(context));
+        }
+
+        private File getDownloadDirectory(Context context) {
+            if (downloadDirectory == null) {
+                downloadDirectory = context.getFilesDir();
+            }
+            return downloadDirectory;
+        }
+
+        private DatabaseProvider getDatabaseProvider(Context context) {
+            if (databaseProvider == null) {
+                databaseProvider = new ExoDatabaseProvider(context);
+            }
+            return databaseProvider;
+        }
+
+        private CacheDataSourceFactory buildReadOnlyCacheDataSource(DataSource.Factory upstreamFactory, Cache cache) {
+//            Log.e(TAG, "buildReadOnlyCacheDataSource", new Throwable());
+            return new CacheDataSourceFactory(cache, upstreamFactory, new FileDataSource.Factory(),
+                    /* cacheWriteDataSinkFactory= */ null,
+                    CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR,
+                    /* eventListener= */ null);
+        }
+
+        public RenderersFactory buildRenderersFactory(Context context) {
+            @DefaultRenderersFactory.ExtensionRendererMode
+            int extensionRendererMode = DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON;
+            return new DefaultRenderersFactory(/* context= */ context).setExtensionRendererMode(extensionRendererMode);
+        }
+
+        private List<MediaSource> createTopLevelMediaSources(Intent intent) {
+            Log.e(TAG, "createTopLevelMediaSources ", new Throwable());
+
+            Sample intentAsSample = Sample.createFromIntent(intent);
+            Sample.UriSample[] samples =
+                    intentAsSample instanceof Sample.PlaylistSample
+                            ? ((Sample.PlaylistSample) intentAsSample).children
+                            : new Sample.UriSample[]{(Sample.UriSample) intentAsSample};
+
+            boolean seenAdsTagUri = false;
+            for (Sample.UriSample sample : samples) {
+                seenAdsTagUri |= sample.adTagUri != null;
+                if (!Util.checkCleartextTrafficPermitted(sample.uri)) {
+//                    showToast(R.string.error_cleartext_not_permitted);
+                    return null;
+                }
+//                if (Util.maybeRequestReadExternalStoragePermission(/* activity= */ this, sample.uri)) {
+//                    // The player will be reinitialized if the permission is granted.
+//                    return null;
+//                }
+            }
+
+            List<MediaSource> mediaSources = new ArrayList<>();
+            for (Sample.UriSample sample : samples) {
+                MediaSource mediaSource = createLeafMediaSource(sample);
+                Sample.SubtitleInfo subtitleInfo = sample.subtitleInfo;
+                if (subtitleInfo != null) {
+                    Format subtitleFormat =
+                            Format.createTextSampleFormat(
+                                    /* id= */ null,
+                                    subtitleInfo.mimeType,
+                                    C.SELECTION_FLAG_DEFAULT,
+                                    subtitleInfo.language);
+                    MediaSource subtitleMediaSource =
+                            new SingleSampleMediaSource.Factory(dataSourceFactory)
+                                    .createMediaSource(subtitleInfo.uri, subtitleFormat, C.TIME_UNSET);
+                    mediaSource = new MergingMediaSource(mediaSource, subtitleMediaSource);
+                }
+                mediaSources.add(mediaSource);
+            }
+//            if (seenAdsTagUri && mediaSources.size() == 1) {
+//                Uri adTagUri = samples[0].adTagUri;
+//                if (!adTagUri.equals(loadedAdTagUri)) {
+//                    releaseAdsLoader();
+//                    loadedAdTagUri = adTagUri;
+//                }
+//                MediaSource adsMediaSource = createAdsMediaSource(mediaSources.get(0), adTagUri);
+//                if (adsMediaSource != null) {
+//                    mediaSources.set(0, adsMediaSource);
+//                } else {
+//                    showToast(R.string.ima_not_loaded);
+//                }
+//            } else if (seenAdsTagUri && mediaSources.size() > 1) {
+//                showToast(R.string.unsupported_ads_in_concatenation);
+//                releaseAdsLoader();
+//            } else {
+//                releaseAdsLoader();
+//            }
+
+            return mediaSources;
         }
 
         private MediaSource createLeafMediaSource(Sample.UriSample parameters) {
@@ -270,7 +404,7 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
 //                            .getDownloadTracker()
 //                            .getDownloadRequest(parameters.uri);
 //            if (downloadRequest != null) {
-//                return DownloadHelper.createMediaSource(downloadRequest, dataSourceFactory);
+//                return DownloadHelper.createMediaSource(downloadRequest, fdataSourceFactory);
 //            }
             return createLeafMediaSource(parameters.uri, parameters.extension, drmSessionManager);
         }
@@ -313,41 +447,42 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
         }
 
         public HttpDataSource.Factory buildHttpDataSourceFactory() {
-            return new DefaultHttpDataSourceFactory("ExoPlayerDemo");
+            String userAgent = context.getResources().getString(R.string.user_agent);
+            return new DefaultHttpDataSourceFactory(userAgent);
         }
 
         public void play() {
             try {
-                exoPlayer.setPlayWhenReady(true);
+                player.setPlayWhenReady(true);
             } catch (Exception e) {
             }
         }
 
         public void pause() {
             try {
-                exoPlayer.setPlayWhenReady(false);
+                player.setPlayWhenReady(false);
             } catch (Exception e) {
             }
         }
 
         public void stop() {
             try {
-                exoPlayer.stop(true);
+                player.stop(true);
             } catch (Exception e) {
             }
         }
 
         public void release() {
             try {
-                exoPlayer.release();
+                player.release();
             } catch (Exception e) {
             }
         }
 
-        // open selected video in fullscreen view
+        // open selected video in fullscreen playerView
         private void doOnClick() {
 //            VideoActivity.open(
-//                    view.getContext(),
+//                    playerView.getContext(),
 //                    (data.URL_high_res != null) ? data.URL_high_res : data.URL_low_res
 //            );
         }
@@ -355,8 +490,8 @@ public final class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.Recycl
         // toggle play/pause of selected video
         private void doOnLongClick() {
             try {
-                exoPlayer.setPlayWhenReady(
-                        !exoPlayer.getPlayWhenReady()
+                player.setPlayWhenReady(
+                        !player.getPlayWhenReady()
                 );
             } catch (Exception e) {
             }
